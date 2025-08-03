@@ -8,9 +8,6 @@
     const appBody = document.getElementById('app');
     if (response.ok) {
       appBody.innerHTML = await response.text();
-      if (appBody.innerHTML.includes('<script type="module" src="/@vite/client"></script>\n')) {  // non-existing pages (default index.html)
-        appBody.innerHTML = '<b>404</b>';
-      }
     }
     else {
       appBody.innerHTML = '<b>404</b>';
@@ -35,9 +32,6 @@ document.body.addEventListener('click', async function (e) { // navigation
   const appBody = document.getElementById('app');
   if (response.ok) {
     appBody.innerHTML = await response.text();
-    if (appBody.innerHTML.includes('<script type="module" src="/@vite/client"></script>\n')) { // non-existing pages (default index.html)
-      appBody.innerHTML = '<b>404</b>';
-    }
   }
   else {
     appBody.innerHTML = '<b>404</b>';
@@ -54,3 +48,7 @@ window.onpopstate = async function handleNavBack(ev) { // go back
   document.getElementById('app').innerHTML = await response.text();
 };
 
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
