@@ -7,7 +7,9 @@ async function navigatePage(hash) {
   const url = new URL(`${location.protocol}//${location.host}/${href}`);
 
   const uri = `page${url.pathname}.html`;
-  const response = await fetch(uri);
+  const response = await fetch(uri, {
+    cache: url.search === '' ? undefined : 'no-store' // cache only if no search param
+  });
 
   const appBody = document.getElementById('app');
   if (response.ok) {
@@ -37,8 +39,6 @@ document.body.addEventListener('click', async function (e) { // navigation
 });
 
 window.onpopstate = async function handleNavBack(ev) { // go back
-  ev.preventDefault();
-  console.log(ev, location);
   await navigatePage(location.hash);
 };
 
