@@ -1,65 +1,45 @@
-function getCurrentRootPath() {
-  const l = document.createElement('link');
-  l.setAttribute('href', './');
-  l.getAttribute('href'); // do not use this, won't auto parsed to full url path 
-  return l.href;
-};
-window.getCurrentRootPath = getCurrentRootPath;
+async function navigatePage(hash) {
+  // fetch resources
+  // #pathname/xxx/yyy
+  const href = hash.substring(1);
 
-const rootURL = getCurrentRootPath();
+  // virtual url for SPA
+  const url = new URL(`${location.protocol}//${location.host}/${href}`);
 
-{ // init page
-  if (location.href !== rootURL) {
-    const href = location.search + location.hash;
-    if (href.startsWith('/')) {
-      window.history.pushState({}, '', href);
-      const uri = rootURL + 'page' + href;
-      const response = await fetch(uri);
-      const appBody = document.getElementById('app');
-      if (response.ok) {
-        appBody.innerHTML = await response.text();
-      }
-      else {
-        appBody.innerHTML = '<b>404</b>';
-      }
-      console.log({ href, uri });
-    }
-  }
-
-}
-
-
-document.body.addEventListener('click', async function (e) { // navigation
-  if (e.target.tagName !== 'A') return;
-  if (e.ctrlKey) return;
-
-  const href = e.target.getAttribute('href');
-  if (href.startsWith('/') === false) return;
-  const uri = rootURL + 'page' + href;
-  e.preventDefault();
-
-  if ((location.pathname + location.search + location.hash) !== href) {
-    window.history.pushState({}, '', href + href.substring(0, href.length));
-  }
+  const uri = `page${url.pathname}.html`;
   const response = await fetch(uri);
+
   const appBody = document.getElementById('app');
   if (response.ok) {
     appBody.innerHTML = await response.text();
   }
   else {
     appBody.innerHTML = '<b>404</b>';
+    console.error({ response });
   }
-  console.log({ href, uri });
+  console.log({ url, uri });
+}
 
+{ // init page
+  if (location.hash !== '') {
+    navigatePage(location.hash);
+  }
+}
+
+document.body.addEventListener('click', async function (e) { // navigation
+  if (e.target.tagName !== 'A') return;
+  if (e.ctrlKey) return;
+
+  const href = e.target.getAttribute('href');
+  if (href.startsWith('#') === false) return;
+
+  await navigatePage(href);
 });
 
 window.onpopstate = async function handleNavBack(ev) { // go back
   ev.preventDefault();
   console.log(ev, location);
-  const href = (location.href === rootURL ) ? 'index.html' : location.pathname + location.search + location.hash;
-  const uri = rootURL + 'page' + href;
-  const response = await fetch(uri);
-  document.getElementById('app').innerHTML = await response.text();
+  await navigatePage(location.hash);
 };
 
 
