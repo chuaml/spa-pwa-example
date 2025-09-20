@@ -14,3 +14,10 @@ workbox.routing.registerRoute(
     ({ request }) => request.destination === 'script',
     new workbox.strategies.NetworkFirst()
 );
+
+workbox.routing.registerRoute(
+  ({ request }) => request.destination === 'document', // catches HTML pages
+  new StaleWhileRevalidate({
+    cacheName: 'html-cache',
+  })
+)
