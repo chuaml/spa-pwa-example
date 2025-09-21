@@ -13,9 +13,13 @@ pages and .html files:
 - all pages are `.html` files
 
 .html files:
-- each html page file is in `/public/page/` directory
+<!-- - each html page file is in `/public/page/` directory
 - html files may be group into a sub directory under `/public/page/(dirname)` directory 
-    - e.g. `/public/page/dirname/(*.html)`
+    - e.g. `/public/page/dirname/(*.html)` -->
+- each html page file is in `/src/page/` directory
+- html files may be group into a sub directory under `/src/page/(dirname)` directory 
+    - e.g. `/src/page/dirname/(*.html)`
+
 - filename is derived from ( URL -> pathname -> split by `/` -> last bit ) and without extension e.g. `.html`
     - example: if URL = `/**/**/xxx` then filename is `xxx`
 - ( URL -> pathname ) is derived from virtual path which is place in after `location.hash`
@@ -40,6 +44,7 @@ Goal of design:
 - partial resources will be injector into template body
 - template `index.html` is the general sturcture of html 
 - template host and contains the shared styles.css and main.js
+- use no 3rd party plugins nor frameworks
 
 
 Why use `locatioh.hash` as the URI path?
@@ -54,13 +59,24 @@ Why use `locatioh.hash` as the URI path?
     - initial load on the wrong path or than the actual home page would cause error and failed
 - thus, virtual path is used; `location.hash` is used to host the actual path for SPA to load partial html page
 
-Why `.html` pages are place separately in `/public` directory?
+<!-- Why `.html` pages are place separately in `/public` directory?
 - because Vite JS cannot import `.html` files without using hack or plugin
     - an error would be thrown 
     - Vite JS only can import html as js string
+    - or import as raw by appending `?raw` to src path
+- thus html page files must reside in `/public` instead along side with js code in `/src`
+ -->
+Why `.html` pages are imported with `?raw`
+- because Vite JS cannot import `.html` files without using hack or plugin
+    - an error would be thrown 
 ```
 [plugin:vite:import-analysis] Failed to parse source for import analysis because the content contains invalid JS syntax. You may need to install appropriate plugins to handle the .html file format, or if it's an asset, add "**/*.html" to `assetsInclude` in your configuration.
 ```
+- Vite JS can only load html data from `/public` as static assets
+    - or import html data from `/src` as js string
+        - e.g. import as raw by appending `?raw` to src path
+    - or `/*.html`, but SPA style will only use 1 i.e. `/index.html` as entry point
+
 - `/src` dir is for placing source code of app, and for import analysis, if any
     - including `*.js` module files and `*.css` files
     - files will be bundled and minimized
@@ -68,7 +84,11 @@ Why `.html` pages are place separately in `/public` directory?
 - files in the `/public` dir will not be bundled nor alter after building for production
     - filename.html is persisted and remain the same, 
     - allowing it to be loaded dynamically via js code `fetch` (to load them as resources)
-- thus html page files must reside in `/public` instead along side with js code in `/src`
+
+- but to group and better organize `*.html` and `*.js` files, both are place into `/src`
+- thus `/src/**/*.html` data load as js string via `?raw` module 
+    - otherwise `*.html` files must either reside in `/public` as static asset be loaded on runtime e.g. via `fetch`
+
 
 
 Why not just place js code and `<script>` tag in the partial html files as well

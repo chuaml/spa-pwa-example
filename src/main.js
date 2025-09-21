@@ -4,7 +4,9 @@ const innerHTMLPolicy = trustedTypes.createPolicy("passthrough", {
 
 /** @type {Object<string, (_: any) => Promise<any>} */
 const modules = import.meta.glob('./page/**/*.js', { eager: false });
-
+/** @type {Object<string, (_: any) => Promise<any>} */
+const pages = import.meta.glob('./page/**/*.html', { eager: false, query: 'raw' });
+console.log('pages', pages);
 
 /** @param {string} hash - should begin with '#/xxx' */
 async function navigatePage(hash) {
@@ -16,31 +18,33 @@ async function navigatePage(hash) {
   // virtual url for SPA
   const url = new URL(`${location.origin}${href}`);
 
-  const uri = `page${url.pathname}.html`;
-  const response = await fetch(uri, {
-    cache: url.search === '' ? undefined : 'no-store' // cache only if no search param
-  });
+  // use `fetch` if load html file from `/public`
+  // const uri = `page${url.pathname}.html`;
+  // const response = await fetch(uri, {
+  //   cache: url.search === '' ? undefined : 'no-store' // cache only if no search param
+  // });
 
-  const appBody = document.getElementById('app');
-  if (response.ok) {
-    appBody.innerHTML = innerHTMLPolicy.createHTML(await response.text());
+  const src = `./page${url.pathname}.html`;
+  const page = pages[src];
+  console.log({ url, src, page });
 
-    const lastResource0 = _loadSharedResources(url.pathname, modules);
-    const lastResource1 = _loadIndividualResources(url.pathname, modules);
+  if (page === undefined) return;
+  const html = await page();
+  // console.log({ html }, html.default);
+  document.getElementById('app').innerHTML = innerHTMLPolicy.createHTML(html.default);
 
-    try {
-      // await last imported files
-      if (lastResource0 !== null) await lastResource0;
-      if (lastResource1 !== null) await lastResource1;
-    } finally {
-      // last step, if any
-    }
+  const lastResource0 = _loadSharedResources(url.pathname, modules);
+  const lastResource1 = _loadIndividualResources(url.pathname, modules);
+
+  try {
+    // await last imported files
+    if (lastResource0 !== null) await lastResource0;
+    if (lastResource1 !== null) await lastResource1;
+  } finally {
+    // last step, if any
   }
-  else {
-    appBody.innerHTML = '<b>404</b>';
-    console.error({ response });
-  }
-  console.log({ url, uri });
+
+  console.log({ url, src });
 }
 
 /** 
@@ -100,11 +104,12 @@ function _loadIndividualResources(pathname, modules) {
 // });
 
 window.onpopstate = async function _handlePageChange(ev) { // custom router
-  await navigatePage(location.hash); // to behave as SPA
-  // window.stop(); this.location.reload();  // to behave as MPA
+  // await navigatePage(location.hash); // to behave as SPA
+  window.stop(); this.location.reload();  // to behave as MPA
 };
 
 
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
-}
+if (location.origin.startsWith('https'))
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
