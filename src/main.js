@@ -88,7 +88,8 @@ function _loadIndividualResources(appBody) {
 // });
 
 window.onpopstate = async function _handlePageChange(ev) { // custom router
-  await navigatePage(location.hash);
+  await navigatePage(location.hash); // to behave as SPA
+  // window.stop(); this.location.reload();  // to behave as MPA
 };
 
 
