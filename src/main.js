@@ -2,6 +2,9 @@ const innerHTMLPolicy = trustedTypes.createPolicy("passthrough", {
   createHTML: (html) => html,
 });
 
+/** @type {Object<string, (_: any) => Promise<any>} */
+const modules = import.meta.glob('./page/**/*.js', { eager: false });
+
 async function navigatePage(hash) {
   // fetch resources
   // #pathname/xxx/yyy
@@ -19,10 +22,10 @@ async function navigatePage(hash) {
   if (response.ok) {
     appBody.innerHTML = await response.text();
 
-    const lastResource0 = _loadSharedResources(url.pathname);
+    const lastResource0 = _loadSharedResources(url.pathname, modules);
 
     // import all script in <module></module> tag
-    const lastResource1 = _loadIndividualResources(appBody);
+    const lastResource1 = _loadIndividualResources(appBody, modules);
 
     try {
       await lastResource0;
@@ -38,7 +41,11 @@ async function navigatePage(hash) {
   console.log({ url, uri });
 }
 
-function _loadSharedResources(pathname) {
+/** 
+ * @param {string} pathname
+ * @param {Object<string, (_: any) => Promise<any>} modules
+ */
+function _loadSharedResources(pathname, modules) {
   // partial page, load dir general shared resources
   // only load sub dir under `/page/`
   // load /src/page/(**/dir.js) if any; assume js filename as same dir name
@@ -46,14 +53,19 @@ function _loadSharedResources(pathname) {
   const paths = pathname.split('/'), len = paths.length - 1;
   for (let i = 1; i < len; ++i) {
     if (paths[i] === '') continue;
-    const src = `/src/page/${paths[i]}/${paths[i]}.js`;
-    lastResource0 = import(src).catch(console.warn);
+    const src = `./page/${paths[i]}/${paths[i]}.js`; // dir is to /src/page/*
+    const module = modules[src];
+    if (!module) continue;
+    lastResource0 = module().catch(console.warn);
   }
   return lastResource0;
 }
 
-/** @param {HTMLElement} appBody */
-function _loadIndividualResources(appBody) {
+/** 
+ * @param {HTMLElement} appBody
+ * @param {Object<string, (_: any) => Promise<any>} modules
+ * */
+function _loadIndividualResources(appBody, modules) {
   // partial page, load individual file specific resources
   // specified in each file top <module></module> tag
   // load /src/page/(file.js|/**/file.js) if any
@@ -62,9 +74,11 @@ function _loadIndividualResources(appBody) {
   if (module !== undefined) {
     const scripts = module.getElementsByTagName('script'), len = scripts.length;
     for (let i = 0; i < len; ++i) {
-      const src = scripts[i].getAttribute('src');
+      const src = scripts[i].getAttribute('src'); // src should be './**/*.js`
       if (src === null || src === '') continue;
-      lastResource1 = import(src).catch(console.warn);
+      const module = modules[src];
+      if (!module) continue;
+      lastResource1 = module().catch(console.warn);
     }
   }
   return lastResource1;
@@ -94,5 +108,5 @@ window.onpopstate = async function _handlePageChange(ev) { // custom router
 
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
+  // navigator.serviceWorker.register('sw.js');
 }
