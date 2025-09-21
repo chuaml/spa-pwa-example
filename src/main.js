@@ -28,17 +28,18 @@ async function navigatePage(hash) {
   }
 }
 
-document.body.addEventListener('click', async function (e) { // navigation
-  if (e.target.tagName !== 'A') return;
-  if (e.ctrlKey) return;
+// duplicated
+// document.body.addEventListener('click', async function (e) { // navigation
+//   if (e.target.tagName !== 'A') return;
+//   if (e.ctrlKey) return;
 
-  const href = e.target.getAttribute('href');
-  if (href.startsWith('#') === false) return;
+//   const href = e.target.getAttribute('href');
+//   if (href.startsWith('#') === false) return;
 
-  await navigatePage(href);
-});
+//   await navigatePage(href);
+// });
 
-window.onpopstate = async function handleNavBack(ev) { // go back
+window.onpopstate = async function _handlePageChange(ev) { // custom router
   await navigatePage(location.hash);
 };
 
