@@ -5,13 +5,16 @@ const innerHTMLPolicy = trustedTypes.createPolicy("passthrough", {
 /** @type {Object<string, (_: any) => Promise<any>} */
 const modules = import.meta.glob('./page/**/*.js', { eager: false });
 
+
+/** @param {string} hash - should begin with '#/xxx' */
 async function navigatePage(hash) {
   // fetch resources
-  // #pathname/xxx/yyy
+  // #/pathname/xxx/yyy
   const href = hash.substring(1);
+  console.assert(href && href.startsWith('/'), `invalid href: ${href}`);
 
   // virtual url for SPA
-  const url = new URL(`${location.origin}/${href}`);
+  const url = new URL(`${location.origin}${href}`);
 
   const uri = `page${url.pathname}.html`;
   const response = await fetch(uri, {
@@ -23,13 +26,12 @@ async function navigatePage(hash) {
     appBody.innerHTML = await response.text();
 
     const lastResource0 = _loadSharedResources(url.pathname, modules);
-
-    // import all script in <module></module> tag
-    const lastResource1 = _loadIndividualResources(appBody, modules);
+    const lastResource1 = _loadIndividualResources(url.pathname, modules);
 
     try {
-      await lastResource0;
-      await lastResource1;
+      // await last imported files
+      if (lastResource0 !== null) await lastResource0;
+      if (lastResource1 !== null) await lastResource1;
     } finally {
       // last step, if any
     }
@@ -42,46 +44,42 @@ async function navigatePage(hash) {
 }
 
 /** 
- * @param {string} pathname
+ * @param {string} pathname - absolute path, e.g. `/abcPage`
  * @param {Object<string, (_: any) => Promise<any>} modules
  */
 function _loadSharedResources(pathname, modules) {
   // partial page, load dir general shared resources
   // only load sub dir under `/page/`
   // load /src/page/(**/dir.js) if any; assume js filename as same dir name
+  // console.assert(pathname && pathname.startsWith('/'), `invalid pathname: ${pathname}`);
+
   let lastResource0 = null;
   const paths = pathname.split('/'), len = paths.length - 1;
   for (let i = 1; i < len; ++i) {
     if (paths[i] === '') continue;
-    const src = `./page/${paths[i]}/${paths[i]}.js`; // dir is to /src/page/*
+    const src = `./page/${paths[i]}/${paths[i]}.js`; // is to /src/page/dir/dir.js
     const module = modules[src];
     if (!module) continue;
-    lastResource0 = module().catch(console.warn);
+    lastResource0 = module().catch(console.error);
   }
   return lastResource0;
 }
 
 /** 
- * @param {HTMLElement} appBody
+ * @param {string} pathname - absolute path, e.g. `/abcPage`
  * @param {Object<string, (_: any) => Promise<any>} modules
  * */
-function _loadIndividualResources(appBody, modules) {
+function _loadIndividualResources(pathname, modules) {
   // partial page, load individual file specific resources
-  // specified in each file top <module></module> tag
   // load /src/page/(file.js|/**/file.js) if any
-  let lastResource1 = null;
-  const module = appBody.getElementsByTagName('module')[0];
-  if (module !== undefined) {
-    const scripts = module.getElementsByTagName('script'), len = scripts.length;
-    for (let i = 0; i < len; ++i) {
-      const src = scripts[i].getAttribute('src'); // src should be './**/*.js`
-      if (src === null || src === '') continue;
-      const module = modules[src];
-      if (!module) continue;
-      lastResource1 = module().catch(console.warn);
-    }
-  }
-  return lastResource1;
+  // console.assert(pathname && pathname.startsWith('/'), `invalid pathname: ${pathname}`);
+
+  if (pathname === '/') return null;
+  const src = `./page${pathname}.js`; // is to /src/page/**/*.js
+  // console.log({ src, modules });
+  const module = modules[src];
+  if (!module) return null;
+  return module().catch(console.error);
 }
 
 { // init page
@@ -108,5 +106,5 @@ window.onpopstate = async function _handlePageChange(ev) { // custom router
 
 
 if ('serviceWorker' in navigator) {
-  // navigator.serviceWorker.register('sw.js');
+  navigator.serviceWorker.register('sw.js');
 }
