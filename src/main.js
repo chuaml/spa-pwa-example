@@ -23,7 +23,7 @@ async function navigatePage(hash) {
 
   const appBody = document.getElementById('app');
   if (response.ok) {
-    appBody.innerHTML = await response.text();
+    appBody.innerHTML = innerHTMLPolicy.createHTML(await response.text());
 
     const lastResource0 = _loadSharedResources(url.pathname, modules);
     const lastResource1 = _loadIndividualResources(url.pathname, modules);
