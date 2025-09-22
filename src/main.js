@@ -4,6 +4,7 @@ const innerHTMLPolicy = trustedTypes.createPolicy("passthrough", {
 
 /** @type {Object<string, (_: any) => Promise<any>} */
 const modules = import.meta.glob('./page/**/*.js', { eager: false });
+
 /** @type {Object<string, (_: any) => Promise<any>} */
 const pages = import.meta.glob('./page/**/*.html', { eager: false, query: 'raw' });
 console.log('pages', pages);
@@ -53,20 +54,44 @@ async function navigatePage(hash) {
  */
 function _loadSharedResources(pathname, modules) {
   // partial page, load dir general shared resources
-  // only load sub dir under `/page/`
-  // load /src/page/(**/dir.js) if any; assume js filename as same dir name
   // console.assert(pathname && pathname.startsWith('/'), `invalid pathname: ${pathname}`);
 
+  // import _shared.js file of each dir (if any)
+  // from bottom (closest to path) to top most dir
   let lastResource0 = null;
-  const paths = pathname.split('/'), len = paths.length - 1;
-  for (let i = 1; i < len; ++i) {
-    if (paths[i] === '') continue;
-    const src = `./page/${paths[i]}/${paths[i]}.js`; // is to /src/page/dir/dir.js
+  for (let path = pathname; path !== '';) {
+    const h = path.lastIndexOf('/');
+    path = path.substring(0, h);
+    const src = `./page${path}/_shared.js`;
+
     const module = modules[src];
+    console.log({ src, module });
     if (!module) continue;
     lastResource0 = module().catch(console.error);
   }
+
   return lastResource0;
+
+
+  // { // from bottom (deepest|closest) to top dir
+  //   for (let path = location.pathname; path !== '';) {
+  //     const h = path.lastIndexOf('/');
+  //     path = path.substring(0, h);
+  //     const src = `./page${path}/_shared.js`;
+  //     console.log(src);
+  //   }
+  // }
+
+  // {  // from top to bottom (deepest) dir
+  //   const paths = location.pathname.split('/').reverse();
+  //   for (let path = paths.pop(); paths.length > 0;) {
+  //     const src = `./page/${path}_shared.js`;
+  //     path += `${paths.pop()}/`;
+  //     console.log(src);
+  //   }
+  // }
+
+
 }
 
 /** 
@@ -104,8 +129,8 @@ function _loadIndividualResources(pathname, modules) {
 // });
 
 window.onpopstate = async function _handlePageChange(ev) { // custom router
-  // await navigatePage(location.hash); // to behave as SPA
-  window.stop(); this.location.reload();  // to behave as MPA
+  await navigatePage(location.hash); // to behave as SPA
+  // window.stop(); window.location.reload();  // to behave as MPA
 };
 
 

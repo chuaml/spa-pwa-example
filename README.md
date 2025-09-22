@@ -25,8 +25,13 @@ pages and .html files:
 - ( URL -> pathname ) is derived from virtual path which is place in after `location.hash`
     - e.g. `http://localhost/#/abs-path` then the virtual path will be `/abs-path`
 
-- the corresponding `.js` file with its filename same as the dirname will be loaded automatically, if any
-    - e.g. if exists `/src/page/dirname/(dirname.js)` then `(dirname.js)` would be would be imported for all `dirname/*.html` html pages under the same dirname
+- each dir level may have 1 `_shared.js` file which will be loaded automatically for all `.html` files in that dir and all its subdir recursively
+    - the `_shared.js` in the deepest dir will be loaded first
+    - e.g. loading sequence:
+        - `/src/page/xxxx/bbb/(_shared.js)`
+        - `/src/page/xxxx/(_shared.js)`
+        - `/src/page/(_shared.js)` 
+    - all `_shared.js` are stacked and applied to all `.html` in its subdir recursively
 
 
 .js files:

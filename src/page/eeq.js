@@ -6,7 +6,7 @@ alert('dynamic js:\n hi from eeq.js');
 // and state will be preserved across pages until reload manually
 {
     let count = 0;
-    document.addEventListener('mouseleave', function (e) {
+    document.addEventListener('mouseover', function (e) {
         console.log(++count, `: ${e.type} from /page/eeq.js`, { 'document.readyState': document.readyState });
     });
 }
