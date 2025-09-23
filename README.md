@@ -26,11 +26,11 @@ pages and .html files:
     - e.g. `http://localhost/#/abs-path` then the virtual path will be `/abs-path`
 
 - each dir level may have 1 `_shared.js` file which will be loaded automatically for all `.html` files in that dir and all its subdir recursively
-    - the `_shared.js` in the deepest dir will be loaded first
+    - the `_shared.js` from top dir will be loaded first
     - e.g. loading sequence:
-        - `/src/page/xxxx/bbb/(_shared.js)`
-        - `/src/page/xxxx/(_shared.js)`
         - `/src/page/(_shared.js)` 
+        - `/src/page/xxxx/(_shared.js)`
+        - `/src/page/xxxx/bbbbb/(_shared.js)`
     - all `_shared.js` are stacked and applied to all `.html` in its subdir recursively
 
 

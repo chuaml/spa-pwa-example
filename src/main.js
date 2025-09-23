@@ -57,40 +57,32 @@ function _loadSharedResources(pathname, modules) {
   // console.assert(pathname && pathname.startsWith('/'), `invalid pathname: ${pathname}`);
 
   // import _shared.js file of each dir (if any)
-  // from bottom (closest to path) to top most dir
+  // from top to bottom (deepest) dir
   let lastResource0 = null;
-  for (let path = pathname; path !== '';) {
-    const h = path.lastIndexOf('/');
-    path = path.substring(0, h);
-    const src = `./page${path}/_shared.js`;
-
+  const paths = pathname.split('/').reverse();
+  for (let path = paths.pop(); paths.length > 0;) {
+    const src = `./page/${path}_shared.js`;
+    path += `${paths.pop()}/`;
     const module = modules[src];
     console.log({ src, module });
     if (!module) continue;
     lastResource0 = module().catch(console.error);
   }
 
+
   return lastResource0;
 
+  // alt algo; in reverse
+  // for shared cleanup and reactive actions?
 
   // { // from bottom (deepest|closest) to top dir
-  //   for (let path = location.pathname; path !== '';) {
+  //   for (let path = pathname; path !== '';) {
   //     const h = path.lastIndexOf('/');
   //     path = path.substring(0, h);
   //     const src = `./page${path}/_shared.js`;
   //     console.log(src);
   //   }
   // }
-
-  // {  // from top to bottom (deepest) dir
-  //   const paths = location.pathname.split('/').reverse();
-  //   for (let path = paths.pop(); paths.length > 0;) {
-  //     const src = `./page/${path}_shared.js`;
-  //     path += `${paths.pop()}/`;
-  //     console.log(src);
-  //   }
-  // }
-
 
 }
 
