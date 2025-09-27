@@ -25,22 +25,40 @@ async function navigatePage(hash) {
   //   cache: url.search === '' ? undefined : 'no-store' // cache only if no search param
   // });
 
+  const appBody = document.getElementById('app');
+  const pathname = url.pathname;
+  if (pathname.endsWith('.png')
+    || pathname.endsWith('.webp')
+    || pathname.endsWith('.jpg')
+    || pathname.endsWith('.jpeg')
+    || pathname.endsWith('.gif')
+    || pathname.endsWith('.svg')
+    || pathname.endsWith('.avif')
+    || pathname.endsWith('.apng')
+  ) {
+    showPicture(url, appBody);
+    return;
+  }
+
   const src = `./page${url.pathname}.html`;
   const page = pages[src];
   console.log({ url, src, page });
 
   if (page === undefined) return;
+
   const html = await page();
   // console.log({ html }, html.default);
-  document.getElementById('app').innerHTML = innerHTMLPolicy.createHTML(html.default);
+  appBody.innerHTML = innerHTMLPolicy.createHTML(html.default);
 
   const lastResource0 = _loadSharedResources(url.pathname, modules);
   const lastResource1 = _loadIndividualResources(url.pathname, modules);
+  const lastResource2 = _loadSharedResources2(url.pathname, modules);
 
   try {
     // await last imported files
     if (lastResource0 !== null) await lastResource0;
     if (lastResource1 !== null) await lastResource1;
+    if (lastResource2 !== null) await lastResource2;
   } finally {
     // last step, if any
   }
@@ -89,6 +107,27 @@ function _loadSharedResources(pathname, modules) {
 /** 
  * @param {string} pathname - absolute path, e.g. `/abcPage`
  * @param {Object<string, (_: any) => Promise<any>} modules
+ */
+function _loadSharedResources2(pathname, modules) {
+  // partial page, load dir general shared resources
+  // console.assert(pathname && pathname.startsWith('/'), `invalid pathname: ${pathname}`);
+
+  // import _onload.js file of each dir (if any)
+  // from bottom to top; deepest | closest to top
+  // for shared cleanup and reactive actions
+  let lastResource2 = null;
+  for (let path = pathname; path !== '';) {
+    const h = path.lastIndexOf('/');
+    path = path.substring(0, h);
+    const src = `./page${path}/_onload.js`;
+    console.log(src);
+  }
+  return lastResource2;
+}
+
+/** 
+ * @param {string} pathname - absolute path, e.g. `/abcPage`
+ * @param {Object<string, (_: any) => Promise<any>} modules
  * */
 function _loadIndividualResources(pathname, modules) {
   // partial page, load individual file specific resources
@@ -101,6 +140,28 @@ function _loadIndividualResources(pathname, modules) {
   const module = modules[src];
   if (!module) return null;
   return module().catch(console.error);
+}
+
+/** 
+ * @param {URL} url 
+ * @param {HTMLElement} appBody
+ * */
+function showPicture(url, appBody) {
+  const img = document.createElement('img');
+  // minimum size before loading
+  img.setAttribute('width', '128'),
+    img.setAttribute('height', '128');
+
+  img.onload = function () {
+    img.setAttribute('width', img.naturalWidth),
+      img.setAttribute('height', img.naturalHeight);
+  };
+
+  img.setAttribute('role', 'img');
+  img.setAttribute('', 'img');
+
+  img.setAttribute('src', `page${url.pathname}${url.search}${url.hash}`);
+  appBody.appendChild(img);
 }
 
 { // init page
