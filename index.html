@@ -18,16 +18,27 @@
       <li><a href="#/eeq?hahh">eeq</a></li>
       <li><a href="#/zzz">zzz</a></li>
       <li>
-        <span>items-pp/</span>
+        <span>items-listing/</span>
         <ul>
-          <li><a href="#/items-pp/items1">items1</a></li>
-          <li><a href="#/items-pp/items2">items2</a></li>
+          <li><a href="#/items-listing/item1">item1</a></li>
+          <li><a href="#/items-listing/item2">item2</a></li>
         </ul>
       </li>
     </ul>
   </nav>
   <div id="app"></div>
-  <script type="module" src="/src/main.js"></script>
+  <div>
+    <button id="btnInstallApp" style="display: none">Install App?</button>
+  </div>
+  <dialog id="_dialog-alert" closedby="closerequest" role="dialog">
+    <form method="dialog">
+      <div id="_dialog-alert__message-body"></div>
+      <div id="_dialog-alert__control">
+        <button autofocus type="submit">Ok</button>
+      </div>
+    </form>
+  </dialog>
+  <script type="module" src="/src/main.js" async></script>
 </body>
 
 </html>
